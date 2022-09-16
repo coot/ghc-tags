@@ -1,4 +1,7 @@
+{-# LANGUAGE CPP #-}
+
 {-# OPTIONS_GHC -Wno-missing-fields #-}
+
 module GhcTags.GhcCompat
   ( runGhc
   , parseModule
@@ -7,7 +10,11 @@ module GhcTags.GhcCompat
 import Data.IORef
 import GHC.Data.FastString
 import GHC.Data.StringBuffer
+#if MIN_VERSION_GHC(9,4)
+import GHC.Driver.Config.Parser
+#else
 import GHC.Driver.Config
+#endif
 import GHC.Driver.Main
 import GHC.Driver.Monad
 import GHC.Driver.Session
@@ -21,7 +28,9 @@ import GHC.Settings.Utils
 import GHC.SysTools
 import GHC.SysTools.BaseDir
 import GHC.Types.SrcLoc
+#if !MIN_VERSION_GHC(9,4)
 import GHC.Unit.Module.Env
+#endif
 import GHC.Utils.Fingerprint
 import System.Directory
 import System.FilePath
@@ -56,20 +65,24 @@ runGhc m = do
 -- for colors as it's not thread safe.
 threadSafeInitDynFlags :: DynFlags -> IO DynFlags
 threadSafeInitDynFlags dflags = do
+#if !MIN_VERSION_GHC(9,4)
   let -- We can't build with dynamic-too on Windows, as labels before the
       -- fork point are different depending on whether we are building
       -- dynamically or not.
       platformCanGenerateDynamicToo
           = platformOS (targetPlatform dflags) /= OSMinGW32
   refDynamicTooFailed <- newIORef (not platformCanGenerateDynamicToo)
+  wrapperNum <- newIORef emptyModuleEnv
+#endif
   refRtldInfo <- newIORef Nothing
   refRtccInfo <- newIORef Nothing
-  wrapperNum <- newIORef emptyModuleEnv
   pure dflags
-    { dynamicTooFailed = refDynamicTooFailed
-    , nextWrapperNum   = wrapperNum
-    , rtldInfo         = refRtldInfo
+    { rtldInfo         = refRtldInfo
     , rtccInfo         = refRtccInfo
+#if !MIN_VERSION_GHC(9,4)
+    , dynamicTooFailed = refDynamicTooFailed
+    , nextWrapperNum   = wrapperNum
+#endif
     }
 
 -- | Stripped version of 'GHC.Settings.IO.initSettings' that ignores the
@@ -79,7 +92,11 @@ compatInitSettings top_dir = do
   -- see Note [topdir: How GHC finds its files]
   -- NB: top_dir is assumed to be in standard Unix
   -- format, '/' separated
-  mtool_dir <- findToolDir top_dir
+  mtool_dir <- findToolDir
+#if MIN_VERSION_GHC(9,4)
+                 False
+#endif
+                 top_dir
         -- see Note [tooldir: How GHC finds mingw on Windows]
 
   let installed :: FilePath -> FilePath
@@ -104,7 +121,13 @@ compatInitSettings top_dir = do
   let getSetting key = either error pure $
         getRawFilePathSetting top_dir settingsFile mySettings key
       getToolSetting :: String -> IO String
-      getToolSetting key = expandToolDir mtool_dir <$> getSetting key
+      getToolSetting key =
+            expandToolDir
+#if MIN_VERSION_GHC(9,4)
+              False
+#endif
+              mtool_dir
+        <$> getSetting key
       getBooleanSetting :: String -> IO Bool
       getBooleanSetting key = either error pure $
         getRawBooleanSetting settingsFile mySettings key
@@ -150,9 +173,11 @@ compatInitSettings top_dir = do
   install_name_tool_path <- getToolSetting "install_name_tool command"
   ranlib_path <- getToolSetting "ranlib command"
 
+#if !MIN_VERSION_GHC(9,4)
   -- TODO this side-effect doesn't belong here. Reading and parsing the settings
   -- should be idempotent and accumulate no resources.
   tmpdir <- liftIO $ getTemporaryDirectory
+#endif
 
   touch_path <- getToolSetting "touch command"
 
@@ -187,12 +212,14 @@ compatInitSettings top_dir = do
       }
 
     , sFileSettings = FileSettings
-      { fileSettings_tmpDir         = normalise tmpdir
-      , fileSettings_ghcUsagePath   = ghc_usage_msg_path
+      { fileSettings_ghcUsagePath   = ghc_usage_msg_path
       , fileSettings_ghciUsagePath  = ghci_usage_msg_path
       , fileSettings_toolDir        = mtool_dir
       , fileSettings_topDir         = top_dir
       , fileSettings_globalPackageDatabase = globalpkgdb_path
+#if !MIN_VERSION_GHC(9,4)
+      , fileSettings_tmpDir         = normalise tmpdir
+#endif
       }
 
     , sToolSettings = ToolSettings
@@ -208,7 +235,11 @@ compatInitSettings top_dir = do
       , toolSettings_pgm_c   = cc_prog
       , toolSettings_pgm_a   = (as_prog, as_args)
       , toolSettings_pgm_l   = (ld_prog, ld_args)
-      , toolSettings_pgm_lm  = (ld_r_prog, map Option $ words ld_r_args)
+      , toolSettings_pgm_lm  =
+#if MIN_VERSION_GHC(9,4)
+          Just
+#endif
+               (ld_r_prog, map Option $ words ld_r_args)
       , toolSettings_pgm_dll = (mkdll_prog,mkdll_args)
       , toolSettings_pgm_T   = touch_path
       , toolSettings_pgm_windres = windres_path
@@ -272,4 +303,5 @@ compatGetTargetPlatform settingsFile mySettings = do
     , platformIsCrossCompiling = False
     , platformLeadingUnderscore = False
     , platformTablesNextToCode  = False
+    , platformHasLibm = False
     }

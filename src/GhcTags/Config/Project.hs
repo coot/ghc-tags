@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module GhcTags.Config.Project where
 
 import Data.Aeson
@@ -5,10 +7,12 @@ import Data.Aeson.Types
 import Data.Maybe
 import Data.List
 import Data.Ord
+
 import GHC.Driver.Flags
 import GHC.Driver.Session
 import GHC.LanguageExtensions
 import GHC.Settings
+
 import System.Directory
 import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.KeyMap as K

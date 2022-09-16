@@ -14,26 +14,16 @@ extra-source-files:  CHANGELOG.md
                      README.md
 homepage:            https://github.com/arybczak/ghc-tags
 bug-reports:         https://github.com/arybczak/ghc-tags/issues
-tested-with:         GHC ==8.10.7 || ==9.0.2 || ==9.2.2
+tested-with:         GHC == { 9.2.5, 9.4.4 }
 
 source-repository head
   type:     git
   location: https://github.com/arybczak/ghc-tags
 
-flag ghc-lib
-  default: False
-  manual:  True
-  description: Use ghc-lib even when compiling with compatible GHC version.
-
 executable ghc-tags
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-A4m
 
-  if !flag(ghc-lib) && impl(ghc == 9.2.*)
-     build-depends:    ghc, ghc-boot
-  else
-     build-depends:    ghc-lib == 9.2.*
-
-  build-depends:       base >=4.14 && <4.17
+  build-depends:       base >=4.14 && <4.18
                      , aeson >= 2.0.0.0
                      , async
                      , attoparsec
@@ -42,7 +32,10 @@ executable ghc-tags
                      , deepseq
                      , directory
                      , filepath
+                     , ghc >= 9.2
+                     , ghc-boot
                      , ghc-paths
+                     , ghc-tags-core >= 0.4.2.2
                      , stm
                      , optparse-applicative
                      , process
@@ -59,21 +52,11 @@ executable ghc-tags
   other-modules:       GhcTags
                        GhcTags.Config.Args
                        GhcTags.Config.Project
-                       GhcTags.Ghc
                        GhcTags.GhcCompat
-                       GhcTags.Tag
-                       GhcTags.CTag
-                       GhcTags.CTag.Header
-                       GhcTags.CTag.Parser
-                       GhcTags.CTag.Formatter
-                       GhcTags.CTag.Utils
-                       GhcTags.ETag
-                       GhcTags.ETag.Parser
-                       GhcTags.ETag.Formatter
-                       GhcTags.Utils
                        Paths_ghc_tags
 
   autogen-modules:     Paths_ghc_tags
+  cpp-options: -DMIN_VERSION_GHC(x,y)=MIN_VERSION_GLASGOW_HASKELL(x,y,0,0)
 
   default-language:    Haskell2010
   default-extensions:  BangPatterns
