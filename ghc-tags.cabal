@@ -1,4 +1,4 @@
-cabal-version:       2.4
+cabal-version:       3.0
 name:                ghc-tags
 version:             1.6
 synopsis:            Utility for generating ctags and etags with GHC API.
@@ -35,7 +35,7 @@ executable ghc-tags
                      , ghc >= 9.2
                      , ghc-boot
                      , ghc-paths
-                     , ghc-tags-core >= 0.4.2.2
+                     , ghc-tags-core:ghc-tags-core ^>= 0.5
                      , stm
                      , optparse-applicative
                      , process
