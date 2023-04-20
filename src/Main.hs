@@ -178,7 +178,12 @@ generateTagsForProject threads wd pc = runConcurrently . F.fold
             showErr :: GHC.GhcException -> IO ()
             showErr = putStrLn . show
 
-            report :: Diagnostic e => DynFlags -> Bag (MsgEnvelope e) -> IO ()
+#if MIN_VERSION_GHC(9,4)
+            report :: Diagnostic e =>
+                      DynFlags -> Bag (MsgEnvelope e) -> IO ()
+#else
+            report :: DynFlags -> Bag (MsgEnvelop DecoratedSDoc) -> IO ()
+#endif
             report flags msgs =
               sequence_ [ putStrLn $ showSDoc flags msg
                         | msg <- pprMsgEnvelopeBagWithLoc msgs

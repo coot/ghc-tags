@@ -303,5 +303,7 @@ compatGetTargetPlatform settingsFile mySettings = do
     , platformIsCrossCompiling = False
     , platformLeadingUnderscore = False
     , platformTablesNextToCode  = False
+#if MIN_VERSION_GHC(9,4)
     , platformHasLibm = False
+#endif
     }
