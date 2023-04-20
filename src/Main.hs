@@ -182,7 +182,7 @@ generateTagsForProject threads wd pc = runConcurrently . F.fold
             report :: Diagnostic e =>
                       DynFlags -> Bag (MsgEnvelope e) -> IO ()
 #else
-            report :: DynFlags -> Bag (MsgEnvelop DecoratedSDoc) -> IO ()
+            report :: DynFlags -> Bag (MsgEnvelope DecoratedSDoc) -> IO ()
 #endif
             report flags msgs =
               sequence_ [ putStrLn $ showSDoc flags msg
