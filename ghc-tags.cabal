@@ -8,7 +8,8 @@ license:             MPL-2.0
 license-file:        LICENSE
 author:              Andrzej Rybczak
 maintainer:          andrzej@rybczak.net
-copyright:           (c) 2021, Andrzej Rybczak
+copyright:           (c) 2021-2023, Andrzej Rybczak,
+                     (c) 2023, Marcin Szamotulski
 category:            Development
 extra-source-files:  CHANGELOG.md
                      README.md
