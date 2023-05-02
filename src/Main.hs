@@ -54,7 +54,11 @@ import qualified Data.Text.IO as T
 import qualified Data.Vector as V
 import Paths_ghc_tags (version)
 
+#if MIN_VERSION_ghc_tags_core(0,6,0)
+import GhcTags hiding ((</>))
+#else
 import GhcTags
+#endif
 import GhcTags.Config.Args
 import GhcTags.Config.Project
 import GhcTags.CTag.Header
@@ -186,7 +190,11 @@ generateTagsForProject threads wd pc = runConcurrently . F.fold
 #endif
             report flags msgs =
               sequence_ [ putStrLn $ showSDoc flags msg
+#if MIN_VERSION_GHC(9,6)
+                        | msg <- pprMsgEnvelopeBagWithLocDefault msgs
+#else
                         | msg <- pprMsgEnvelopeBagWithLoc msgs
+#endif
                         ]
 
         -- Alex and Hsc files need to be preprocessed before going into GHC.
@@ -342,7 +350,11 @@ readTags tt tagsFile = doesFileExist tagsFile >>= \case
       SingETag -> fmap (fmap ([], )) . ETag.parseTagsFileMap
       SingCTag ->                      CTag.parseTagsFileMap
 
+#if MIN_VERSION_GHC(9,6)
+updateTagsWith :: DynFlags -> Located (HsModule GhcPs) -> DirtyTags -> DirtyTags
+#else
 updateTagsWith :: DynFlags -> Located HsModule -> DirtyTags -> DirtyTags
+#endif
 updateTagsWith dflags hsModule DirtyTags{..} =
   DirtyTags { dtTags = Map.unionWith mergeTags fileTags dtTags
             , ..

@@ -25,7 +25,9 @@ import GHC.Platform
 import GHC.Settings
 import GHC.Settings.Config
 import GHC.Settings.Utils
+#if !MIN_VERSION_GHC(9,6)
 import GHC.SysTools
+#endif
 import GHC.SysTools.BaseDir
 import GHC.Types.SrcLoc
 #if !MIN_VERSION_GHC(9,4)
@@ -42,7 +44,11 @@ parseModule
   :: FilePath
   -> DynFlags
   -> StringBuffer
+#if MIN_VERSION_GHC(9,6)
+  -> ParseResult (Located (HsModule GhcPs))
+#else
   -> ParseResult (Located HsModule)
+#endif
 parseModule filename flags buffer = unP Parser.parseModule parseState
   where
     location = mkRealSrcLoc (mkFastString filename) 1 1
@@ -52,9 +58,15 @@ runGhc :: Ghc a -> IO a
 runGhc m = do
   env <- liftIO $ do
     mySettings <- compatInitSettings libdir
+#if MIN_VERSION_GHC(9,6)
+    dflags <- threadSafeInitDynFlags (defaultDynFlags mySettings)
+    top_dir <- getCurrentDirectory
+    newHscEnv top_dir dflags
+#else
     myLlvmConfig <- lazyInitLlvmConfig libdir
     dflags <- threadSafeInitDynFlags (defaultDynFlags mySettings myLlvmConfig)
     newHscEnv dflags
+#endif
   ref <- newIORef env
   unGhc (GHC.withCleanupSession m) (Session ref)
 
@@ -154,7 +166,9 @@ compatInitSettings top_dir = do
       cc_args  = words cc_args_str ++ unreg_cc_args
       cxx_args = words cxx_args_str
   ldSupportsCompactUnwind <- getBooleanSetting "ld supports compact unwind"
+#if !MIN_VERSION_GHC(9,6)
   ldSupportsBuildId       <- getBooleanSetting "ld supports build-id"
+#endif
   ldSupportsFilelist      <- getBooleanSetting "ld supports filelist"
   ldIsGnuLd               <- getBooleanSetting "ld is GNU ld"
 
@@ -167,7 +181,9 @@ compatInitSettings top_dir = do
   unlit_path <- getToolSetting "unlit command"
 
   windres_path <- getToolSetting "windres command"
+#if !MIN_VERSION_GHC(9,6)
   libtool_path <- getToolSetting "libtool command"
+#endif
   ar_path <- getToolSetting "ar command"
   otool_path <- getToolSetting "otool command"
   install_name_tool_path <- getToolSetting "install_name_tool command"
@@ -224,7 +240,9 @@ compatInitSettings top_dir = do
 
     , sToolSettings = ToolSettings
       { toolSettings_ldSupportsCompactUnwind = ldSupportsCompactUnwind
+#if !MIN_VERSION_GHC(9,6)
       , toolSettings_ldSupportsBuildId       = ldSupportsBuildId
+#endif
       , toolSettings_ldSupportsFilelist      = ldSupportsFilelist
       , toolSettings_ldIsGnuLd               = ldIsGnuLd
       , toolSettings_ccSupportsNoPie         = gccSupportsNoPie
@@ -243,7 +261,9 @@ compatInitSettings top_dir = do
       , toolSettings_pgm_dll = (mkdll_prog,mkdll_args)
       , toolSettings_pgm_T   = touch_path
       , toolSettings_pgm_windres = windres_path
+#if !MIN_VERSION_GHC(9,6)
       , toolSettings_pgm_libtool = libtool_path
+#endif
       , toolSettings_pgm_ar = ar_path
       , toolSettings_pgm_otool = otool_path
       , toolSettings_pgm_install_name_tool = install_name_tool_path
