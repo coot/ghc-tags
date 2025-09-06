@@ -34,6 +34,9 @@ import GHC.Types.SrcLoc
 import GHC.Unit.Module.Env
 #endif
 import GHC.Utils.Fingerprint
+#if MIN_VERSION_GHC(9,6)
+import GHC.Utils.TmpFs (TempDir (..))
+#endif
 import System.Directory
 import System.FilePath
 import qualified Data.Map.Strict as Map
@@ -59,7 +62,8 @@ runGhc m = do
   env <- liftIO $ do
     mySettings <- compatInitSettings libdir
 #if MIN_VERSION_GHC(9,6)
-    dflags <- threadSafeInitDynFlags (defaultDynFlags mySettings)
+    tmpDir <- TempDir <$> getTemporaryDirectory
+    dflags <- threadSafeInitDynFlags (defaultDynFlags mySettings) { tmpDir = tmpDir }
     top_dir <- getCurrentDirectory
     newHscEnv top_dir dflags
 #else
@@ -86,16 +90,12 @@ threadSafeInitDynFlags dflags = do
   refDynamicTooFailed <- newIORef (not platformCanGenerateDynamicToo)
   wrapperNum <- newIORef emptyModuleEnv
 #endif
-  refRtldInfo <- newIORef Nothing
-  refRtccInfo <- newIORef Nothing
   pure dflags
-    { rtldInfo         = refRtldInfo
-    , rtccInfo         = refRtccInfo
 #if !MIN_VERSION_GHC(9,4)
-    , dynamicTooFailed = refDynamicTooFailed
+    { dynamicTooFailed = refDynamicTooFailed
     , nextWrapperNum   = wrapperNum
-#endif
     }
+#endif
 
 -- | Stripped version of 'GHC.Settings.IO.initSettings' that ignores the
 -- @platformConstants@ file as it's irrelevant for parsing.
@@ -143,7 +143,6 @@ compatInitSettings top_dir = do
       getBooleanSetting :: String -> IO Bool
       getBooleanSetting key = either error pure $
         getRawBooleanSetting settingsFile mySettings key
-  myExtraGccViaCFlags <- getSetting "GCC extra via C opts"
   -- On Windows, mingw is distributed with GHC,
   -- so we look in TopDir/../mingw/bin,
   -- as well as TopDir/../../mingw/bin for hadrian.
@@ -195,10 +194,12 @@ compatInitSettings top_dir = do
   tmpdir <- liftIO $ getTemporaryDirectory
 #endif
 
+#if !MIN_VERSION_GHC(9,10)
   touch_path <- getToolSetting "touch command"
 
   mkdll_prog <- getToolSetting "dllwrap command"
   let mkdll_args = []
+#endif
 
   -- cpp is derived from gcc on all platforms
   -- HACK, see setPgmP below. We keep 'words' here to remember to fix
@@ -217,7 +218,9 @@ compatInitSettings top_dir = do
   -- We just assume on command line
   lc_prog <- getSetting "LLVM llc command"
   lo_prog <- getSetting "LLVM opt command"
+#if !MIN_VERSION_GHC(9,10)
   lcc_prog <- getSetting "LLVM clang command"
+#endif
 
   let iserv_prog = libexec "ghc-iserv"
 
@@ -258,8 +261,10 @@ compatInitSettings top_dir = do
           Just
 #endif
                (ld_r_prog, map Option $ words ld_r_args)
+#if !MIN_VERSION_GHC(9,10)
       , toolSettings_pgm_dll = (mkdll_prog,mkdll_args)
       , toolSettings_pgm_T   = touch_path
+#endif
       , toolSettings_pgm_windres = windres_path
 #if !MIN_VERSION_GHC(9,6)
       , toolSettings_pgm_libtool = libtool_path
@@ -270,7 +275,9 @@ compatInitSettings top_dir = do
       , toolSettings_pgm_ranlib = ranlib_path
       , toolSettings_pgm_lo  = (lo_prog,[])
       , toolSettings_pgm_lc  = (lc_prog,[])
+#if !MIN_VERSION_GHC(9,10)
       , toolSettings_pgm_lcc = (lcc_prog,[])
+#endif
       , toolSettings_pgm_i   = iserv_prog
       , toolSettings_opt_L       = []
       , toolSettings_opt_P       = []
@@ -282,12 +289,14 @@ compatInitSettings top_dir = do
       , toolSettings_opt_l       = []
       , toolSettings_opt_lm      = []
       , toolSettings_opt_windres = []
+#if !MIN_VERSION_GHC(9,10)
       , toolSettings_opt_lcc     = []
+#endif
       , toolSettings_opt_lo      = []
       , toolSettings_opt_lc      = []
       , toolSettings_opt_i       = []
 
-      , toolSettings_extraGccViaCFlags = words myExtraGccViaCFlags
+      , toolSettings_extraGccViaCFlags = []
       }
 
     , sTargetPlatform = platform

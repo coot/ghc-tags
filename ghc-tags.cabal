@@ -7,7 +7,7 @@ description:         Utility for generating etags (Emacs) and ctags (Vim and oth
 license:             MPL-2.0
 license-file:        LICENSE
 author:              Andrzej Rybczak
-maintainer:          andrzej@rybczak.net
+maintainer:          Marcin Szamotulski coot@coot.me
 copyright:           (c) 2021-2023, Andrzej Rybczak,
                      (c) 2023, Marcin Szamotulski
 category:            Development
@@ -15,7 +15,7 @@ extra-source-files:  CHANGELOG.md
                      README.md
 homepage:            https://github.com/arybczak/ghc-tags
 bug-reports:         https://github.com/arybczak/ghc-tags/issues
-tested-with:         GHC == { 8.10, 9.0, 9.2, 9.4, 9.6 }
+tested-with:         GHC == { 9.6, 9.8, 9.10, 9.12 }
 
 source-repository head
   type:     git
@@ -24,7 +24,7 @@ source-repository head
 executable ghc-tags
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-A4m
 
-  build-depends:       base >=4.14 && <4.19
+  build-depends:       base >=4.14 && <4.22
                      , aeson >= 2.0.0.0
                      , async
                      , attoparsec
