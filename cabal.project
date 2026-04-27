@@ -1,3 +1,6 @@
-index-state: 2025-09-06T00:00:00Z
+index-state: 2026-03-08T18:29:02Z
 
 packages: .
+
+if impl (ghc >= 9.14)
+  allow-newer: *:base, *:template-haskell, *:containers, *:ghc-bignum, *:time

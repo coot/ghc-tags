@@ -30,10 +30,16 @@ import GHC.SysTools
 #endif
 import GHC.SysTools.BaseDir
 import GHC.Types.SrcLoc
+#if MIN_VERSION_GHC(9,14)
+import GHC.Unit.Types (stringToUnitId)
+#endif
 #if !MIN_VERSION_GHC(9,4)
 import GHC.Unit.Module.Env
 #endif
 import GHC.Utils.Fingerprint
+#if MIN_VERSION_GHC(9,14)
+import GHC.Utils.Panic.Plain
+#endif
 #if MIN_VERSION_GHC(9,6)
 import GHC.Utils.TmpFs (TempDir (..))
 #endif
@@ -224,6 +230,12 @@ compatInitSettings top_dir = do
 
   let iserv_prog = libexec "ghc-iserv"
 
+#if MIN_VERSION_GHC(9,14)
+  let getSetting_raw key = either pgmError pure $
+        getRawSetting settingsFile mySettings key
+  baseUnitId' <- getSetting_raw "base unit-id"
+#endif
+
   return $ Settings
     { sGhcNameVersion = GhcNameVersion
       { ghcNameVersion_programName = "ghc"
@@ -305,6 +317,13 @@ compatInitSettings top_dir = do
     , sPlatformMisc = PlatformMisc {}
 
     , sRawSettings    = settingsList
+
+#if MIN_VERSION_GHC(9,14)
+    , sUnitSettings = UnitSettings
+      {
+        unitSettings_baseUnitId = stringToUnitId baseUnitId'
+      }
+#endif
     }
 
 -- Stripped version of 'GHC.Settings.Platform.getTargetPlatform'. Arch info is

@@ -32,6 +32,10 @@ jobs:
     strategy:
       matrix:
         include:
+          - compiler: ghc-9.14
+            compilerKind: ghc
+            compilerVersion: 9.14
+            setup-method: ghcup
           - compiler: ghc-9.12
             compilerKind: ghc
             compilerVersion: 9.12
