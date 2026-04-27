@@ -3,8 +3,8 @@
 [![Build Status](https://github.com/coot/ghc-tags/workflows/Haskell-CI/badge.svg?branch=master)](https://github.com/coot/ghc-tags/actions?query=branch%3Amaster)
 [![Hackage](https://img.shields.io/hackage/v/ghc-tags.svg)](https://hackage.haskell.org/package/ghc-tags)
 
-A fork of [`ghc-tags`][ghc-tags-original] which is using [`ghc-tags-core`] to
-generate tags.
+A fork of [`ghc-tags`][ghc-tags-original] which is using
+[`ghc-tags-core`][ghc-tags-core] to generate tags.
 
 A command line tool that generates etags
 ([Emacs](https://www.gnu.org/software/emacs)) and ctags
@@ -106,9 +106,8 @@ exclude_paths:
 ```
 
 ## Acknowledgments
-
-Thanks to Marcin Szamotulski for his work on
-[ghc-tags-plugin](https://github.com/coot/ghc-tags-plugin) `ghc-tags` is based on.
+Thanks to Andrzej Rybczak for his work on
+[`ghc-tags`][ghc-tags-original] on which this version is based.
 
 [ghc-tags-original]: https://hackage.haskell.org/package/ghc-tags
-[`ghc-tags-core`]: https://hackage.haskell.org/package/ghc-tags-core
+[ghc-tags-core]: https://hackage.haskell.org/package/ghc-tags-core
