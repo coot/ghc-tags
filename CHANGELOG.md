@@ -1,3 +1,7 @@
+# Unreleased
+* Update to `ghc-tags-core-1.0.0.0`, using `RemoveTerms` to suppress term and
+  function tags that have a type signature in the same binding group.
+
 # ghc-tags-1.6 (2022-??-??)
 * Handle definitions of class methods properly.
 * Enable `MagicHash`by default.

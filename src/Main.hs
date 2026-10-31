@@ -371,7 +371,7 @@ updateTagsWith dflags hsModule DirtyTags{..} =
       let tags = Map.fromListWith Set.union
                . map (second Set.singleton)
                . mapMaybe (fmap (tagFilePath &&& id) . ghcTagToTag dtKind dflags)
-               $ getGhcTags hsModule
+               $ getGhcTags RemoveTerms hsModule
       in Map.map (Updated True) tags
 
 cleanupTags :: Args -> DirtyTags -> IO Tags

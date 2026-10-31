@@ -36,7 +36,7 @@ executable ghc-tags
                      , ghc >= 9.2
                      , ghc-boot
                      , ghc-paths
-                     , ghc-tags-core:ghc-tags-core ^>= 0.6.2
+                     , ghc-tags-core:ghc-tags-core ^>= 1.0.0.0
                      , stm
                      , optparse-applicative
                      , process
